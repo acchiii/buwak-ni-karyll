@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buwak ni Karya</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: #cbd5e1;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .flower-container {
+            margin: 2rem auto;
+            width: 300px;
+            height: 300px;
+            position: relative;
+        }
+        
+        canvas {
+            background-color: rgba(30, 41, 59, 0.5);
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+        }
+        
+        .controls {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(139, 92, 246, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(139, 92, 246, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+        }
+        
+        input[type="range"] {
+            width: 100px;
+            accent-color: #8b5cf6;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .description {
+                font-size: 1rem;
+            }
+            
+            .flower-container {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Buwak sa Patay</h1>
+        <p class="description">Paarang Karya!</p>
+        
+        <div class="flower-container">
+            <canvas id="flowerCanvas" width="300" height="300"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="toggleAnimation" style="display: none;">Pause Animation</button>
+            <button id="changeFlower" style="display: none;">Change Flower</button>
+            <div class="speed-control">
+                <span style="display: none;">Speed:</span>
+                <input  style="display: none;" type="range" id="speedControl" min="0.5" max="2" step="0.1" value="1.9">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AnimatedFlower {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.width = canvas.width;
+                this.height = canvas.height;
+                this.centerX = this.width / 2;
+                this.centerY = this.height / 2;
+                this.animationSpeed = 1;
+                this.isAnimating = true;
+                this.flowerType = 0;
+                this.petalCount = 8;
+                this.petalLength = 80;
+                this.petalWidth = 40;
+                this.rotation = 0;
+                this.swayOffset = 0;
+                this.bloomProgress = 0;
+                this.colors = [
+                    { center: '#FF6B6B', petals: '#FFE66D' },
+                    { center: '#4ECDC4', petals: '#FF9F1C' },
+                    { center: '#6A0572', petals: '#AB83A1' },
+                    { center: '#2A9D8F', petals: '#E9C46A' }
+                ];
+                
+                this.initialize();
+                this.animate();
+            }
+            
+            initialize() {
+                this.bloomProgress = 0;
+                this.animateBloom();
+            }
+            
+            draw() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                // Draw background gradient
+                const gradient = this.ctx.createRadialGradient(
+                    this.centerX, this.centerY, 0,
+                    this.centerX, this.centerY, this.width / 2
+                );
+                gradient.addColorStop(0, 'rgba(30, 41, 59, 0.8)');
+                gradient.addColorStop(1, 'rgba(15, 23, 42, 0.8)');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Draw stem
+                this.drawStem();
+                
+                // Draw flower
+                this.drawFlower();
+            }
+            
+            drawStem() {
+                this.ctx.save();
+                this.ctx.translate(this.centerX, this.centerY + 60);
+                
+                // Sway the stem with the flower
+                this.ctx.rotate(Math.sin(this.swayOffset) * 0.1);
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, 0);
+                this.ctx.quadraticCurveTo(
+                    10, 100,
+                    0, 200
+                );
+                
+                this.ctx.strokeStyle = '#22c55e';
+                this.ctx.lineWidth = 6;
+                this.ctx.stroke();
+                
+                this.ctx.restore();
+            }
+            
+            drawFlower() {
+                this.ctx.save();
+                this.ctx.translate(this.centerX, this.centerY);
+                
+                // Sway the flower
+                this.ctx.rotate(Math.sin(this.swayOffset) * 0.15);
+                
+                // Scale for blooming animation
+                const scale = 0.5 + (this.bloomProgress * 0.5);
+                this.ctx.scale(scale, scale);
+                
+                // Draw petals
+                for (let i = 0; i < this.petalCount; i++) {
+                    const angle = (i * (Math.PI * 2 / this.petalCount)) + this.rotation;
+                    this.drawPetal(angle);
+                }
+                
+                // Draw center
+                this.drawCenter();
+                
+                this.ctx.restore();
+            }
+            
+            drawPetal(angle) {
+                this.ctx.save();
+                this.ctx.rotate(angle);
+                
+                this.ctx.beginPath();
+                this.ctx.ellipse(
+                    this.petalLength * 0.7, 0,
+                    this.petalLength, this.petalWidth,
+                    0, 0, Math.PI * 2
+                );
+                
+                const gradient = this.ctx.createLinearGradient(
+                    -this.petalLength * 0.5, 0,
+                    this.petalLength * 1.5, 0
+                );
+                gradient.addColorStop(0, this.colors[this.flowerType].petals + '80');
+                gradient.addColorStop(0.5, this.colors[this.flowerType].petals);
+                gradient.addColorStop(1, this.colors[this.flowerType].petals + '80');
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.fill();
+                
+                this.ctx.strokeStyle = '#ffffff30';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                
+                this.ctx.restore();
+            }
+            
+            drawCenter() {
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 20, 0, Math.PI * 2);
+                
+                const gradient = this.ctx.createRadialGradient(0, 0, 5, 0, 0, 20);
+                gradient.addColorStop(0, this.colors[this.flowerType].center);
+                gradient.addColorStop(1, this.colors[this.flowerType].center + '80');
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.fill();
+                
+                // Add texture to center
+                this.ctx.strokeStyle = '#ffffff40';
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i < 12; i++) {
+                    const angle = i * (Math.PI / 6);
+                    const x1 = Math.cos(angle) * 15;
+                    const y1 = Math.sin(angle) * 15;
+                    const x2 = Math.cos(angle) * 25;
+                    const y2 = Math.sin(angle) * 25;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x1, y1);
+                    this.ctx.lineTo(x2, y2);
+                    this.ctx.stroke();
+                }
+            }
+            
+            animate() {
+                if (!this.isAnimating) return;
+                
+                this.rotation += 0.01 * this.animationSpeed;
+                this.swayOffset += 0.05 * this.animationSpeed;
+                
+                this.draw();
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            animateBloom() {
+                if (this.bloomProgress < 1) {
+                    this.bloomProgress += 0.02 * this.animationSpeed;
+                    setTimeout(() => this.animateBloom(), 16);
+                }
+            }
+            
+            toggleAnimation() {
+                this.isAnimating = !this.isAnimating;
+                if (this.isAnimating) {
+                    this.animate();
+                }
+            }
+            
+            changeFlower() {
+                this.flowerType = (this.flowerType + 1) % 4;
+                this.petalCount = [8, 6, 12, 5][this.flowerType];
+                this.petalLength = [80, 70, 90, 60][this.flowerType];
+                this.petalWidth = [40, 35, 45, 30][this.flowerType];
+                this.initialize();
+            }
+            
+            setSpeed(speed) {
+                this.animationSpeed = speed;
+            }
+        }
+        
+        // Initialize the flower animation
+        const canvas = document.getElementById('flowerCanvas');
+        const flower = new AnimatedFlower(canvas);
+        
+        // Add event listeners for controls
+        document.getElementById('toggleAnimation').addEventListener('click', function() {
+            flower.toggleAnimation();
+            this.textContent = flower.isAnimating ? 'Pause Animation' : 'Play Animation';
+        });
+        
+        document.getElementById('changeFlower').addEventListener('click', function() {
+            flower.changeFlower();
+        });
+
+        // auto click change flower every two seconds 
+        setInterval(() => {
+            document.getElementById('changeFlower').click();
+        }, 3000); 
+        
+        document.getElementById('speedControl').addEventListener('input', function(e) {
+            flower.setSpeed(parseFloat(e.target.value));
+        });
+        
+        // Make canvas responsive
+        window.addEventListener('resize', function() {
+            const container = document.querySelector('.flower-container');
+            const size = Math.min(container.offsetWidth, container.offsetHeight, 300);
+            canvas.width = size;
+            canvas.height = size;
+            flower.width = size;
+            flower.height = size;
+            flower.centerX = size / 2;
+            flower.centerY = size / 2;
+        });
+    </script>
+</body>
+</html>
