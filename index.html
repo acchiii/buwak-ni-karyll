@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buwak ni Karya</title>
+    <title></title>
     <style>
         * {
             margin: 0;
@@ -123,8 +123,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Buwak sa Patay</h1>
-        <p class="description">Paarang Karya!</p>
+        <h1></h1>
+        <p class="description"></p>
         
         <div class="flower-container">
             <canvas id="flowerCanvas" width="300" height="300"></canvas>
@@ -347,9 +347,13 @@
         });
 
         // auto click change flower every two seconds 
-        setInterval(() => {
+        /* setInterval(() => {
             document.getElementById('changeFlower').click();
-        }, 3000); 
+        }, 3000); */
+
+        document.addEventListener('click', function() {
+            document.getElementById('changeFlower').click();
+        });
         
         document.getElementById('speedControl').addEventListener('input', function(e) {
             flower.setSpeed(parseFloat(e.target.value));
